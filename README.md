@@ -1,5 +1,7 @@
 # Harness
 
+📖 中文文档: [README.zh-CN.md](./README.zh-CN.md)
+
 > **Harness is not a linter. Harness is how your codebase stops repeating the same architectural mistake.**
 
 `.harness/` is a drop-in folder for your repository that turns past incidents into guardrails — rules your code and your AI coding agents can't silently route around.
