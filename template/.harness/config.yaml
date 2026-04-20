@@ -1,0 +1,82 @@
+# ============================================================
+# .harness/config.yaml · thin skeleton
+#
+# Put machine-readable mappings here (rules ↔ checks, task types,
+# aggregate script list). Keep narrative rules in rules/*.md.
+# When you bump a rule, also bump harness_version + add a CHANGELOG entry.
+# ============================================================
+
+version: 1
+project: <your-project-name>
+activated: <YYYY-MM-DD>
+harness_version: 0.1.0  # bump + sync with CHANGELOG.md top entry on every rule change
+
+# ---- Layer model (edit to match your architecture) ----
+# Used by session-start.md Action 1 to force the AI to name which layer it's touching.
+# Typical shapes:
+#   Web app:         meta / engine / service / ui / infra
+#   Monolith API:    domain / application / interface / infra
+#   Data pipeline:   source / transform / sink / monitoring
+# Keep 3–5 layers. If you need more, your architecture is probably underspecified.
+layers:
+  - name: <layer-1>
+    purpose: <one line — what lives here>
+  - name: <layer-2>
+    purpose: <one line>
+  - name: <layer-3>
+    purpose: <one line>
+
+# ---- Rule ↔ check mapping ----
+# Each rule is one markdown file in rules/. If it has an automated check,
+# point to its script. If it's review-only (semantic / cognitive), set script: null.
+checks:
+  # Seeded example — delete once you've authored your first real rule.
+  example-no-parallel-source-of-truth:
+    script: .harness/checks/check-no-parallel-source-of-truth.sh
+    description: Don't maintain the same fact in two places (enum lists, label maps, field aliases)
+    scope: src/**/*
+    severity: error
+    doc: .harness/rules/example-no-parallel-source-of-truth.md
+    allowlist: []
+    forbidden_exports: []
+
+# ---- Task type → rule triggers ----
+# When an AI agent (or human) classifies a change, look up which rules must be checked.
+# Add your own task types as you discover recurring change shapes in your project.
+task_types:
+  # Seeded examples — replace with task types real to your codebase.
+  feature_change:
+    trigger_paths:
+      - src/**/*
+    rules_must_check: []
+    note: Replace with the shape of a typical feature change in your repo.
+
+  schema_migration:
+    trigger_paths:
+      - migrations/**/*
+      - scripts/migrate-*
+    rules_must_check: []
+    note: Migrations deserve their own task type because they're hard to roll back.
+
+  harness_evolution:
+    # Don't remove — used when you edit .harness/ itself (see evolve.md).
+    trigger_paths:
+      - .harness/**/*
+    rules_must_check: []
+    note: Even changes to the harness must follow the meta-rules (no silent rewrites, CHANGELOG required).
+
+# ---- Soft advisories (not blocking) ----
+advisory:
+  max_file_lines_soft_warn: 300
+  max_file_lines_hard_warn: 500
+  # Hard enforcement of file-size / any-type / console.log belongs to your linter, not here.
+
+# ---- Aggregate check entry point ----
+# npm run harness:check (or make harness) runs everything in this list.
+aggregate:
+  all_checks:
+    - .harness/checks/check-no-parallel-source-of-truth.sh
+  self_health:
+    - .harness/checks/check-harness-health.sh
+  review_only_rules: []  # rules without a script — still enforced via human PR review
+  runner_hint: "Add a package.json script: \"harness:check\": \"bash -c 'for f in .harness/checks/check-*.sh; do bash \"$f\" || exit 1; done'\""
