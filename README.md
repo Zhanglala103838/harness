@@ -96,10 +96,16 @@ See [`docs/ai-integration.md`](./docs/ai-integration.md) for concrete wiring pat
 
 Not required by harness, but often adopted alongside it:
 
+- **[Meta-rules (cognitive family)](./docs/meta-rules.md)** — the MR-* family of rules that encode _how the AI reasons_ before it writes code, alongside the R-* rules that encode _what the code looks like_.
+- **[Hook integration](./docs/hook-integration.md)** — SessionStart and PreToolUse hooks make the harness context unavoidable rather than opt-in.
+- **[External review](./docs/external-review.md)** — second-opinion protocol: primary AI does the work, a reviewer AI is invoked at fixed trigger points, disagreements default to the reviewer.
 - **[Three-pass review pipeline](./docs/review-pipeline.md)** — split code review into bug-finder / security-quality / refactor passes to keep each pass's signal sharp.
 - **[Commit convention](./docs/commit-convention.md)** — `<type>(<scope>): <subject>` pairing with harness's per-project CHANGELOG.
 - **[Vendor-source-before-patching](./template/.harness/rules/example-read-vendor-source-before-patching.md)** — seeded rule for bugs rooted in third-party component defaults.
 - **[Three-strikes rule](./template/.harness/rules/example-three-strikes-same-file.md)** — when the same file gets three bugfix rounds with different diagnoses, stop iterating and escalate for root-cause analysis.
+- **[Schema-before-UI-patch](./template/.harness/rules/example-schema-before-ui-patch.md)** — meta-rule: fix the data model; don't paper over missing fields in the view layer.
+- **[Real verification over mocks](./template/.harness/rules/example-real-verification-over-mocks.md)** — meta-rule: "tests pass" is not runtime proof for DB / resolver / migration fixes.
+- **[UI purpose-first](./template/.harness/rules/example-ui-purpose-first.md)** — meta-rule: before rendering a field, answer "what does the user do on this screen, what does this field contribute, what happens if it's missing."
 
 ## Philosophy
 

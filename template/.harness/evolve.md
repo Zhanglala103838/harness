@@ -153,6 +153,41 @@ harness-exempt-extend: <file-path> · R-<id>
 
 ---
 
-## 5 · Meta note
+## 5 · Meta-rules (cognitive family)
+
+Most rules are about _structure_ — the code either conforms or doesn't, grep can tell. A second family is about _how the AI reasons_ before it writes the structure. These are **meta-rules** (MR-*).
+
+Meta-rules are subject to the same lifecycle (draft → active → stable → legacy → retired) but:
+
+- They're almost always `auto_check: review-only` or `auto_check: ai-self-discipline`.
+- Their "Why" section cites incidents where the AI's _reasoning_ failed, not where the _structure_ failed.
+- They're triggered from `session-start.md` as pre-flight questions, not from post-hoc check scripts.
+- They still require ≥ 2 real incidents to promote — same bar as architecture rules.
+
+See `docs/meta-rules.md` for the full split. When writing a meta-rule, use the Model A template below; set `auto-check: ❌ manual-only` in the output.
+
+---
+
+## 6 · Task-type composition
+
+When two task types overlap on the same artifact, the conflict must be resolved explicitly in `config.yaml` under `composition:`. Without a composition rule, one task silently wins and the other's invariant is violated.
+
+Shape:
+
+```yaml
+composition:
+  - types: [<type-A>, <type-B>]
+    winner: <which invariant takes precedence>
+    guard: <what the losing side must carry so both invariants hold>
+    why: <one-line justification grounded in an incident>
+```
+
+Composition rules are **discovered, not designed** — you notice them after shipping a bug that both task types claim to own. Document the resolution before the next overlapping change.
+
+**Common shape · "only_if_empty guard"**: when task type A's output can be overwritten by task type B, and A's output is the authoritative one, B must carry an `only_if_empty` guard so it only writes when A hasn't already populated the target.
+
+---
+
+## 7 · Meta note
 
 This file itself is subject to the same discipline. When the harness protocol changes (new trigger, new cadence, new template), update this file and reference the change in `CHANGELOG.md`. Don't let `evolve.md` rot.

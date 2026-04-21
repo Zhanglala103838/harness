@@ -91,10 +91,16 @@ Harness 和具体 AI 工具无关，能配合任何能在 session 开头读 mark
 
 不是 harness 强制，但经常和它一起用：
 
+- **[元规则（认知族）](./docs/meta-rules.md)**——MR-* 族规则，管"AI 怎么推理"（和 R-* 管"代码长什么样"并列）
+- **[Hook 集成](./docs/hook-integration.md)**——SessionStart / PreToolUse hook 让 harness 上下文从"opt-in"变成"绕不过"
+- **[二次 review 协议](./docs/external-review.md)**——双 AI 协作：主 AI 干活 · review AI 在固定触发点介入 · 冲突默认 reviewer 正确
 - **[三阶段 code review 管线](./docs/review-pipeline.md)**——把 review 拆成 bug-finder / 安全-质量 / 重构三并行 pass，每 pass 信号更锐利
 - **[Commit 规范](./docs/commit-convention.md)**——`<type>(<scope>): <subject>`，和 harness 的每项目 CHANGELOG 完美配合
 - **[改第三方组件 bug 前必读 vendor 源码](./template/.harness/rules/example-read-vendor-source-before-patching.md)**——种子规则，专治"符合直觉但治标不治本"的 setTimeout 类修复
 - **[同文件三振出局](./template/.harness/rules/example-three-strikes-same-file.md)**——同文件连续 3 轮不同诊断的 bugfix → 停手，做根因重分析，不再打补丁
+- **[改模型 · 不要糊 UI](./template/.harness/rules/example-schema-before-ui-patch.md)**——元规则种子：数据模型缺字段时，去改模型而不是在 UI 里 `?? defaultValue`
+- **[mock 测试过了 ≠ 真跑通](./template/.harness/rules/example-real-verification-over-mocks.md)**——元规则种子：DB / resolver / migration 类修复，"tests pass" 不构成完成证据
+- **[展示字段前先问 3 问](./template/.harness/rules/example-ui-purpose-first.md)**——元规则种子：用户在这界面做什么？这字段提供什么？没它会怎样？答不出就别展示
 
 ## 哲学
 

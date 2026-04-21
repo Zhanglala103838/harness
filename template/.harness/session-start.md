@@ -1,6 +1,28 @@
 # AI Session Start — Pre-flight ritual
 
-> Every session that touches this repo, an AI coding agent MUST run these actions before writing any code. Keep this file ≤ 200 lines. Prefer short over empty.
+> Every session that touches this repo, an AI coding agent MUST run these actions before writing any code. Keep this file ≤ 300 lines. Prefer short over empty.
+
+---
+
+## Action 0 · Language split (optional, for multilingual teams)
+
+If your team communicates in a language other than English but the codebase is English: declare the split up-front so the AI doesn't mix them.
+
+| Layer | Language |
+|---|---|
+| Internal reasoning · plans · diagnosis · self-review | **English** (more training data, less ambiguity) |
+| Source code · SQL · identifiers · comments | **English** |
+| `.harness/*` rules / configs | **English** |
+| Commit type(scope) | **English** |
+| User-facing replies / PR narrative / issue bodies | **user's language** |
+| Business domain terms in diagrams | user's language (retained) |
+
+**Self-check before every response**:
+1. Was my internal reasoning in English? (yes → continue · no → re-think)
+2. Is my user-facing output in the user's language? (yes → send · no → translate)
+3. Are my code / comment / harness edits in English? (yes → write · no → fix)
+
+Delete this section if your team works in English only.
 
 ---
 
@@ -12,9 +34,15 @@ State which layer of the architecture this change touches. The layers are define
 
 ## Action 2 · Classify task type
 
-Look up `config.yaml` → `task_types:`. Name the task type that matches your change. Report which rules (`rules_must_check`) apply.
+Look up `config.yaml` → `task_types:`. Name the task type that matches your change. Report which rules (`rules_must_check`) and meta-rules (`meta_rules_must_check`) apply.
+
+If your project uses `trigger_phrases:` (verbatim user phrase → task type mapping), check whether the current request matches any listed phrase. Verbatim phrase matching catches task classification drift that path-based matching misses.
 
 If no task type matches your change cleanly: stop and propose a new task type via `evolve.md` model A _before_ writing code. A change with no task type is a change with no guardrails.
+
+**Composition check** (when two task types overlap on the same artifact): if `config.yaml` declares a `composition:` section resolving the overlap, follow it. Otherwise, declare the composition unresolved and escalate before writing code. See `evolve.md` §6.
+
+**Hard-stop gates** (if your project's task type declares one): re-read it before writing code. Mid-task, if you discover you've crossed into a neighboring task type's territory, **stop** and report — do not silently extend the current task's remit.
 
 ## Action 3 · Read relevant sections
 
@@ -22,11 +50,26 @@ If no task type matches your change cleanly: stop and propose a new task type vi
 - Your project's design docs / ADRs — relevant sections only, not the whole thing.
 - If this is a bug fix: any debug/runbook doc in your project (if present).
 
-## Action 4 · Report intent
+## Action 4 · Report verifiable intent
 
-Before writing code, post a one-sentence intent:
+Before writing code, post a one-sentence intent plus a per-step verify plan.
 
-> _"Goal: `<one line>` · Layer: `<layer>` · Task type: `<type>` · Rules in scope: `R-a, R-b, R-c` · No conflicts found."_
+**Intent line**:
+> _"Goal: `<one line>` · Layer: `<layer>` · Task type: `<type>` · Rules in scope: `R-a, R-b` · Meta-rules: `MR-x, MR-y` · No conflicts found."_
+
+**Verify template** (required for any multi-step task):
+```
+1. <step> → verify: <exact command / SQL / UI state / log line>
+2. <step> → verify: <…>
+3. <step> → verify: <…>
+```
+
+"Make it work" / "fix it" alone is not a verifiable goal. Each step must name a runnable check or an observable state. If you can't name the verify, you don't yet understand the step well enough to write it.
+
+**Simplicity + surgical self-check** (before writing code):
+- Would a senior engineer call this diff overcomplicated? (simplicity)
+- Does every changed line trace back to this task? (surgical)
+- Any "no" → revise the plan before you write.
 
 If you find a rule conflict: **stop and report**. Do not route around rules to "finish the task." The right answer is almost always to change the rule, or change the plan.
 
@@ -60,6 +103,30 @@ Before asking a human teammate to run an SQL query / open devtools / curl an end
 
 Two consecutive human-side investigations in one session → stop and reflect. You may be asking wrong questions.
 
+## Action 8 · Ground diagnoses in config, not names (data-driven systems only)
+
+Skip this action if your project has no config-driven layer.
+
+Before diagnosing any bug that involves a configurable field / rule / permission / flag, run the authoritative query before you speak:
+
+```bash
+# Example — replace with your project's actual config source
+SELECT key, type, semantics, owner FROM <config_table>
+ WHERE scope = <current_scope>
+   AND (key IN (<candidate_keys>) OR label LIKE '<keyword>%')
+```
+
+Never infer semantics from variable names alone. JSON key names, camelCase identifiers, and hard-coded label maps drift from the truth; the config is the truth. If your reasoning cites a key name without citing the underlying row, you're guessing.
+
+## Action 9 · Don't disturb the user's running environment
+
+Dev servers, long-running processes, browser sessions, IDE daemons — these belong to the user. The AI **must not** disturb them.
+
+- ❌ **Forbidden**: fuzzy kills like `pkill -f "next dev"` / `pkill -f "vue-cli-service"` / `killall node` — they match and kill the user's own processes.
+- ✅ If the AI needs its own smoke run: capture PID at start (`DEV_PID=$!`), only `kill $DEV_PID`, and use a non-default port.
+- ✅ **Port already in use** → assume the user is running it. Skip the smoke, rely on typecheck / unit tests.
+- ✅ The user's hot-reload is their normal state; the AI must not create anomalies.
+
 ---
 
 ## Forbidden patterns
@@ -69,6 +136,7 @@ Two consecutive human-side investigations in one session → stop and reflect. Y
 - Silent fallbacks / catch-and-ignore / default-value covers for missing data
 - Re-implementing a rule's domain inside a service (e.g. permission checks inside a page component, metadata interpretation inside a service)
 - Hardcoding a business rule next to a DB config that already stores it
+- Claiming "tests pass" as proof of a runtime / DB / resolver fix — mocks are not evidence for behavior that runs against real state. See `example-real-verification-over-mocks.md`.
 
 ## When blocked
 

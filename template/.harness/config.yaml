@@ -9,7 +9,7 @@
 version: 1
 project: <your-project-name>
 activated: <YYYY-MM-DD>
-harness_version: 0.1.0  # bump + sync with CHANGELOG.md top entry on every rule change
+harness_version: 0.3.0  # bump + sync with CHANGELOG.md top entry on every rule change
 
 # ---- Layer model (edit to match your architecture) ----
 # Used by session-start.md Action 1 to force the AI to name which layer it's touching.
@@ -29,6 +29,11 @@ layers:
 # ---- Rule ↔ check mapping ----
 # Each rule is one markdown file in rules/. If it has an automated check,
 # point to its script. If it's review-only (semantic / cognitive), set script: null.
+#
+# Two families:
+#   - Architecture rules (R-*)  → structural boundaries, usually grep-able
+#   - Meta rules (MR-*)         → AI behavior / cognition, usually review-only
+# See docs/meta-rules.md for the split rationale.
 checks:
   # Seeded example — delete once you've authored your first real rule.
   example-no-parallel-source-of-truth:
@@ -40,15 +45,33 @@ checks:
     allowlist: []
     forbidden_exports: []
 
+  # Example meta-rule (review-only, no script).
+  example-real-verification-over-mocks:
+    script: null
+    description: Mocks pass ≠ runtime works · every DB/resolver fix needs a real-data verification
+    auto_check: review-only
+    severity: review-only
+    doc: .harness/rules/example-real-verification-over-mocks.md
+
 # ---- Task type → rule triggers ----
 # When an AI agent (or human) classifies a change, look up which rules must be checked.
 # Add your own task types as you discover recurring change shapes in your project.
+#
+# Rich fields (all optional):
+#   trigger_paths       · file globs that imply this task type
+#   trigger_phrases     · verbatim user phrases (any language) that imply this task type
+#   rules_must_check    · list of R-ids from checks: above
+#   meta_rules_must_check · list of MR-ids (cognitive rules)
+#   hard_stop           · mid-task condition that MUST stop the work and re-classify
+#   decision_tree       · named sub-paths inside this task type (when applicable)
+#   reference_doc       · deep-dive doc path
 task_types:
   # Seeded examples — replace with task types real to your codebase.
   feature_change:
     trigger_paths:
       - src/**/*
     rules_must_check: []
+    meta_rules_must_check: []
     note: Replace with the shape of a typical feature change in your repo.
 
   schema_migration:
@@ -56,6 +79,7 @@ task_types:
       - migrations/**/*
       - scripts/migrate-*
     rules_must_check: []
+    meta_rules_must_check: []
     note: Migrations deserve their own task type because they're hard to roll back.
 
   harness_evolution:
@@ -63,7 +87,29 @@ task_types:
     trigger_paths:
       - .harness/**/*
     rules_must_check: []
+    meta_rules_must_check: []
     note: Even changes to the harness must follow the meta-rules (no silent rewrites, CHANGELOG required).
+
+# ---- Task composition (optional) ----
+# When two task types overlap on the same artifact, declare how to resolve.
+# Without composition rules, overlap leads to one task silently "winning" and
+# leaving the other's invariant violated.
+composition:
+  # Seeded example — delete if your task types never overlap.
+  # - types: [feature_change, schema_migration]
+  #   winner: schema_migration
+  #   guard: feature_change must carry a precondition check against the migration
+  #   why: migrations run once; features run many times · order of operations matters
+
+# ---- Consumers registry (optional, for file-level hook integration) ----
+# List of files that consume a specific rule's convention. When combined with a
+# PreToolUse hook (see docs/hook-integration.md), editing any listed file can
+# force the AI to run a consumer audit before producing the diff.
+consumers:
+  # Seeded example — populate from rules/*.md `consumers:` sections.
+  # example-no-parallel-source-of-truth:
+  #   - src/lib/constants/enum-labels.ts
+  #   - src/lib/field-aliases.ts
 
 # ---- Soft advisories (not blocking) ----
 advisory:
