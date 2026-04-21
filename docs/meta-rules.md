@@ -16,7 +16,7 @@ Once you've been running the harness for a few months on a codebase heavy with A
 Meta-rules look like they belong in a style guide or an AI system prompt, not a harness. They belong here because:
 
 1. **They recur.** The same reasoning shortcut burns the team on Monday, a different subsystem, same shape of mistake.
-2. **They're project-specific.** "Always query `report_columns` before diagnosing field bugs" is not advice that transfers to a non-data-driven project. Generic linters can't hold it.
+2. **They're project-specific.** "Always query the authoritative config table before diagnosing field bugs" is not advice that transfers to a non-data-driven project. Generic linters can't hold it.
 3. **They benefit from the same evolve protocol.** A meta-rule that catches zero violations for 12 weeks is ready to retire, exactly like an architecture rule.
 
 ---
