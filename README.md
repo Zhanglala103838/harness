@@ -1,6 +1,6 @@
 # Harness
 
-📖 中文文档: [README.zh-CN.md](./README.zh-CN.md)
+📖 中文文档: [README.zh-CN.md](./README.zh-CN.md) · **Latest: v0.3.0** ([CHANGELOG](./CHANGELOG.md))
 
 > **Harness is not a linter. Harness is how your codebase stops repeating the same architectural mistake.**
 
@@ -8,7 +8,21 @@
 
 - **Not a lint replacement.** ESLint, Prettier, `tsc`, `pylint` already handle code style. Harness handles the boundaries _those_ tools can't see: layer leaks, parallel sources of truth, drift between config and code, metadata interpreted in the wrong layer.
 - **Built for AI-era codebases.** When AI coding agents produce most of the diff, the only lasting leverage is hard boundaries they must read before touching code. Harness encodes those boundaries as three synced layers: **spec → rules → checks**.
+- **Two rule families.** **Architecture rules** (R-*) encode _what the code looks like_ — grep-able. **Meta-rules** (MR-*) encode _how the AI reasons_ before it writes the code — review-only. [Read more →](./docs/meta-rules.md)
 - **Self-evolving.** Rules are born, graduate to stable, and retire. The harness checks its own health so dead rules don't rot.
+
+---
+
+## What's new in 0.3.0
+
+- **[Meta-rules family](./docs/meta-rules.md)** (MR-*) — cognitive rules that catch _reasoning_ failures the way structural rules catch _code_ failures.
+- **[Hook integration](./docs/hook-integration.md)** — `SessionStart` + `PreToolUse` hooks that make the harness unavoidable, not opt-in.
+- **[External-review protocol](./docs/external-review.md)** — two-AI collaboration: primary does the work, reviewer AI invoked at fixed triggers; defaults to reviewer on conflict.
+- **Three new seeded meta-rule examples** — schema-before-ui-patch, real-verification-over-mocks, ui-purpose-first.
+- **`config.yaml` schema extended** with six optional fields: `trigger_phrases`, `hard_stop`, `composition`, `decision_tree`, `consumers`, `meta_rules_must_check`.
+- **Session-start ritual** grew from 5 to 9 actions (still ≤ 300 lines): optional bilingual split, verify-template per step, simplicity+surgical gate, ground-diagnoses-in-config, don't-disturb-running-environment.
+
+Full notes: [`CHANGELOG.md`](./CHANGELOG.md).
 
 ---
 
@@ -17,14 +31,20 @@
 ```
 .harness/
 ├── README.md                    ← 5-minute on-ramp for your team
-├── config.yaml                  ← rules ↔ checks mapping (machine-readable)
-├── session-start.md             ← AI session-start ritual (mandatory read)
-├── evolve.md                    ← self-upgrade / self-retire protocol
+├── config.yaml                  ← rules ↔ checks mapping (machine-readable · now with
+│                                    trigger_phrases, hard_stop, composition, consumers)
+├── session-start.md             ← AI session-start ritual (mandatory read · 9 actions)
+├── evolve.md                    ← self-upgrade / self-retire / composition protocol
 ├── violations-triage.md         ← exemption tracker with expiry dates
 ├── CHANGELOG.md                 ← versioned rule history
 ├── rules/
-│   ├── _TEMPLATE.md             ← copy this to author a new rule
-│   └── <your-rule>.md           ← one doc per hard boundary
+│   ├── _TEMPLATE.md                              ← copy this to author a new rule
+│   ├── example-no-parallel-source-of-truth.md    ← architecture rule (R-*)
+│   ├── example-read-vendor-source-before-patching.md
+│   ├── example-three-strikes-same-file.md
+│   ├── example-schema-before-ui-patch.md         ← meta-rule (MR-*)
+│   ├── example-real-verification-over-mocks.md   ← meta-rule (MR-*)
+│   └── example-ui-purpose-first.md               ← meta-rule (MR-*)
 └── checks/
     ├── _TEMPLATE.sh             ← copy this to author a new check
     ├── check-harness-health.sh  ← harness self-health (ships with kit)
@@ -87,10 +107,12 @@ Harness is AI-agnostic. It works with:
 - IDE-integrated assistants (via their system-prompt / rules-file features)
 - CLI-based agents (via an explicit "read `.harness/session-start.md` first" instruction)
 - Headless CI agents (via session-start checks)
+- **Hook-capable agents** — use `SessionStart` / `PreToolUse` hooks to make the harness unavoidable instead of opt-in. See [`docs/hook-integration.md`](./docs/hook-integration.md).
+- **Teams that run two AIs** — primary + reviewer protocol. See [`docs/external-review.md`](./docs/external-review.md).
 
 See [`docs/ai-integration.md`](./docs/ai-integration.md) for concrete wiring patterns across several popular tools.
 
-**The core contract**: the AI must state _"I have read .harness/session-start.md · my task type is X · rules R-a, R-b apply"_ before writing code. If it doesn't, reject the PR.
+**The core contract**: the AI must state _"I have read .harness/session-start.md · my task type is X · rules R-a, R-b apply · meta-rules MR-x, MR-y apply"_ before writing code. If it doesn't, reject the PR.
 
 ## Bonus patterns (opt-in)
 

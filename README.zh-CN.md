@@ -6,9 +6,23 @@
 
 - **不是 lint 替代品**：ESLint / Prettier / `tsc` / `pylint` 管代码风格；harness 管这些工具看不见的东西——跨层泄漏、平行真相、配置和代码的漂移、元数据在错误的层被解释。
 - **为 AI 时代代码库而生**：当 AI 生成大部分 diff 时，真正持久的杠杆是"它必须读过才能动手"的硬边界。Harness 把边界落成同步的三层：**spec → rules → checks**。
+- **两族规则**：**架构规则（R-\*）** 管"代码长什么样"——可 grep；**元规则（MR-\*）** 管"AI 动手前怎么推理"——只走 review。[详见 →](./docs/meta-rules.md)
 - **自我演进**：规则有生命周期——诞生、稳定、退役。Harness 会自检健康，死规则不会默默烂掉。
 
-📖 English README: [README.md](./README.md)
+📖 English README: [README.md](./README.md) · **最新版：v0.3.0**（[CHANGELOG](./CHANGELOG.md)）
+
+---
+
+## v0.3.0 新增
+
+- **[元规则族](./docs/meta-rules.md)**（MR-*）——"认知型"规则，捕捉_推理_失败（和结构规则捕捉_代码_失败并列）
+- **[Hook 集成](./docs/hook-integration.md)**——`SessionStart` + `PreToolUse` hook 让 harness 从"opt-in"变成"绕不过"
+- **[二次 review 协议](./docs/external-review.md)**——双 AI 协作：主 AI 干活 · reviewer AI 固定触发点介入 · 冲突默认 reviewer 正确
+- **3 条种子元规则示例** —— schema-before-ui-patch、real-verification-over-mocks、ui-purpose-first
+- **`config.yaml` schema 扩展**：新增 6 个可选字段 `trigger_phrases` / `hard_stop` / `composition` / `decision_tree` / `consumers` / `meta_rules_must_check`
+- **session-start 仪式** 从 5 动作扩到 9 动作（仍 ≤ 300 行）：可选多语言分层、每步必须给 verify、简洁性+手术刀自检、配置驱动诊断、不干扰用户进程
+
+完整日志：[`CHANGELOG.md`](./CHANGELOG.md)
 
 ---
 
@@ -17,14 +31,20 @@
 ```
 .harness/
 ├── README.md                    ← 团队 5 分钟上手说明
-├── config.yaml                  ← rules ↔ checks 的机器可读映射
-├── session-start.md             ← AI 会话开场必读仪式
-├── evolve.md                    ← 自升级 / 自退役协议
+├── config.yaml                  ← rules ↔ checks 的机器可读映射（v0.3 加了
+│                                    trigger_phrases / hard_stop / composition / consumers）
+├── session-start.md             ← AI 会话开场必读仪式（9 动作）
+├── evolve.md                    ← 自升级 / 自退役 / 任务组合协议
 ├── violations-triage.md         ← 带到期日的豁免追踪
 ├── CHANGELOG.md                 ← 规则变更版本历史
 ├── rules/
-│   ├── _TEMPLATE.md             ← 复制它来写新规则
-│   └── <你的规则>.md             ← 一条硬边界 = 一份 markdown
+│   ├── _TEMPLATE.md                              ← 复制它来写新规则
+│   ├── example-no-parallel-source-of-truth.md    ← 架构规则（R-*）
+│   ├── example-read-vendor-source-before-patching.md
+│   ├── example-three-strikes-same-file.md
+│   ├── example-schema-before-ui-patch.md         ← 元规则（MR-*）
+│   ├── example-real-verification-over-mocks.md   ← 元规则（MR-*）
+│   └── example-ui-purpose-first.md               ← 元规则（MR-*）
 └── checks/
     ├── _TEMPLATE.sh             ← 复制它来写新 check
     ├── check-harness-health.sh  ← harness 自检（开箱自带）
@@ -81,9 +101,16 @@ cp -r /tmp/harness/template/.harness ./.harness
 
 ## AI 集成
 
-Harness 和具体 AI 工具无关，能配合任何能在 session 开头读 markdown 的 agent。
+Harness 和具体 AI 工具无关，配合场景：
 
-**核心契约**：AI 动手写代码前必须声明 _"已读 .harness/session-start.md · 本次任务类型 = X · 生效规则 = R-a, R-b"_。没这句话的 PR 一律拒。
+- 任何能在 session 开头读 markdown 的 coding agent
+- IDE 集成型助手（通过它的 system-prompt / rules-file 机制）
+- CLI agent（在提示词里显式要它先读 `.harness/session-start.md`）
+- Headless CI agent（通过 session-start 检查）
+- **支持 hook 的 agent**——用 `SessionStart` / `PreToolUse` hook 让 harness 从"opt-in"变成"绕不过"。见 [`docs/hook-integration.md`](./docs/hook-integration.md)
+- **跑双 AI 的团队**——主 AI + reviewer AI 协议。见 [`docs/external-review.md`](./docs/external-review.md)
+
+**核心契约**：AI 动手写代码前必须声明 _"已读 .harness/session-start.md · 本次任务类型 = X · 生效规则 = R-a, R-b · 生效元规则 = MR-x, MR-y"_。没这句话的 PR 一律拒。
 
 各家工具接线方式见 [`docs/ai-integration.md`](./docs/ai-integration.md)。
 
