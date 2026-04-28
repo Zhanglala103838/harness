@@ -9,7 +9,7 @@
 version: 1
 project: <your-project-name>
 activated: <YYYY-MM-DD>
-harness_version: 0.3.0  # bump + sync with CHANGELOG.md top entry on every rule change
+harness_version: 0.4.0  # bump + sync with CHANGELOG.md top entry on every rule change
 
 # ---- Layer model (edit to match your architecture) ----
 # Used by session-start.md Action 1 to force the AI to name which layer it's touching.
@@ -52,6 +52,14 @@ checks:
     auto_check: review-only
     severity: review-only
     doc: .harness/rules/example-real-verification-over-mocks.md
+
+  # Seeded staged-migration rule (v0.4.0). Skips silently until you fill SCOPE_DIRS.
+  example-legacy-allowlist-staged-migration:
+    script: .harness/checks/check-legacy-allowlist-staged-migration.sh
+    description: Install rule against 5+ existing violations · pilot + LEGACY_ALLOWLIST + dated source markers
+    severity: error
+    doc: .harness/rules/example-legacy-allowlist-staged-migration.md
+    legacy_requires_marker: exactly one '@<rule-id>-legacy until=YYYY-MM-DD' per allowlisted file
 
 # ---- Task type → rule triggers ----
 # When an AI agent (or human) classifies a change, look up which rules must be checked.
@@ -122,6 +130,7 @@ advisory:
 aggregate:
   all_checks:
     - .harness/checks/check-no-parallel-source-of-truth.sh
+    - .harness/checks/check-legacy-allowlist-staged-migration.sh  # SKIPs cleanly until SCOPE_DIRS is filled
   self_health:
     - .harness/checks/check-harness-health.sh
   review_only_rules: []  # rules without a script — still enforced via human PR review

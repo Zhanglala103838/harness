@@ -1,6 +1,6 @@
 # Harness
 
-📖 中文文档: [README.zh-CN.md](./README.zh-CN.md) · **Latest: v0.3.0** ([CHANGELOG](./CHANGELOG.md))
+📖 中文文档: [README.zh-CN.md](./README.zh-CN.md) · **Latest: v0.4.0** ([CHANGELOG](./CHANGELOG.md))
 
 > **Harness is not a linter. Harness is how your codebase stops repeating the same architectural mistake.**
 
@@ -13,14 +13,16 @@
 
 ---
 
-## What's new in 0.3.0
+## What's new in 0.4.0
 
-- **[Meta-rules family](./docs/meta-rules.md)** (MR-*) — cognitive rules that catch _reasoning_ failures the way structural rules catch _code_ failures.
-- **[Hook integration](./docs/hook-integration.md)** — `SessionStart` + `PreToolUse` hooks that make the harness unavoidable, not opt-in.
-- **[External-review protocol](./docs/external-review.md)** — two-AI collaboration: primary does the work, reviewer AI invoked at fixed triggers; defaults to reviewer on conflict.
-- **Three new seeded meta-rule examples** — schema-before-ui-patch, real-verification-over-mocks, ui-purpose-first.
-- **`config.yaml` schema extended** with six optional fields: `trigger_phrases`, `hard_stop`, `composition`, `decision_tree`, `consumers`, `meta_rules_must_check`.
-- **Session-start ritual** grew from 5 to 9 actions (still ≤ 300 lines): optional bilingual split, verify-template per step, simplicity+surgical gate, ground-diagnoses-in-config, don't-disturb-running-environment.
+- **[Legacy-allowlist staged-migration pattern](./template/.harness/rules/example-legacy-allowlist-staged-migration.md)** — the discipline for installing a rule against a codebase that already violates it 5+ times. Three-tier strategy (greenfield / 1–2 / 5+), pilot-consumer requirement, dated source-marker enforcement, mandatory migration-path section.
+- **Seeded check** with `@<rule-id>-legacy until=YYYY-MM-DD` marker uniqueness + expiry enforcement (missing / duplicate / expired all fail). Ships with reusable bash 3.x `strip_comments` awk helper.
+- **[`docs/evolution.md`](./docs/evolution.md)** gained "Installing rules retroactively" — the section that explains why naive big-bang and naive no-rule both fail, and how staging avoids the `--no-verify` cascade.
+- **[`docs/writing-checks.md`](./docs/writing-checks.md)** gained "Legacy allowlist with dated marker" and "Stripping comments before pattern matching" sections.
+
+These distill a real PR cycle on a mature deployment, hardened across three iterations — you ship at the final shape.
+
+Previous: [v0.3.0 notes](./CHANGELOG.md#030--2026-04-21) (meta-rules family, hooks, external review).
 
 Full notes: [`CHANGELOG.md`](./CHANGELOG.md).
 
@@ -42,6 +44,7 @@ Full notes: [`CHANGELOG.md`](./CHANGELOG.md).
 │   ├── example-no-parallel-source-of-truth.md    ← architecture rule (R-*)
 │   ├── example-read-vendor-source-before-patching.md
 │   ├── example-three-strikes-same-file.md
+│   ├── example-legacy-allowlist-staged-migration.md  ← rollout rule (R-*) · v0.4.0
 │   ├── example-schema-before-ui-patch.md         ← meta-rule (MR-*)
 │   ├── example-real-verification-over-mocks.md   ← meta-rule (MR-*)
 │   └── example-ui-purpose-first.md               ← meta-rule (MR-*)
@@ -125,6 +128,7 @@ Not required by harness, but often adopted alongside it:
 - **[Commit convention](./docs/commit-convention.md)** — `<type>(<scope>): <subject>` pairing with harness's per-project CHANGELOG.
 - **[Vendor-source-before-patching](./template/.harness/rules/example-read-vendor-source-before-patching.md)** — seeded rule for bugs rooted in third-party component defaults.
 - **[Three-strikes rule](./template/.harness/rules/example-three-strikes-same-file.md)** — when the same file gets three bugfix rounds with different diagnoses, stop iterating and escalate for root-cause analysis.
+- **[Legacy-allowlist staged migration](./template/.harness/rules/example-legacy-allowlist-staged-migration.md)** — install a rule against 5+ existing violations without a `--no-verify` cascade: pilot consumer + LEGACY_ALLOWLIST + dated `@<rule-id>-legacy until=YYYY-MM-DD` source markers + named closing PR.
 - **[Schema-before-UI-patch](./template/.harness/rules/example-schema-before-ui-patch.md)** — meta-rule: fix the data model; don't paper over missing fields in the view layer.
 - **[Real verification over mocks](./template/.harness/rules/example-real-verification-over-mocks.md)** — meta-rule: "tests pass" is not runtime proof for DB / resolver / migration fixes.
 - **[UI purpose-first](./template/.harness/rules/example-ui-purpose-first.md)** — meta-rule: before rendering a field, answer "what does the user do on this screen, what does this field contribute, what happens if it's missing."

@@ -9,18 +9,20 @@
 - **两族规则**：**架构规则（R-\*）** 管"代码长什么样"——可 grep；**元规则（MR-\*）** 管"AI 动手前怎么推理"——只走 review。[详见 →](./docs/meta-rules.md)
 - **自我演进**：规则有生命周期——诞生、稳定、退役。Harness 会自检健康，死规则不会默默烂掉。
 
-📖 English README: [README.md](./README.md) · **最新版：v0.3.0**（[CHANGELOG](./CHANGELOG.md)）
+📖 English README: [README.md](./README.md) · **最新版：v0.4.0**（[CHANGELOG](./CHANGELOG.md)）
 
 ---
 
-## v0.3.0 新增
+## v0.4.0 新增
 
-- **[元规则族](./docs/meta-rules.md)**（MR-*）——"认知型"规则，捕捉_推理_失败（和结构规则捕捉_代码_失败并列）
-- **[Hook 集成](./docs/hook-integration.md)**——`SessionStart` + `PreToolUse` hook 让 harness 从"opt-in"变成"绕不过"
-- **[二次 review 协议](./docs/external-review.md)**——双 AI 协作：主 AI 干活 · reviewer AI 固定触发点介入 · 冲突默认 reviewer 正确
-- **3 条种子元规则示例** —— schema-before-ui-patch、real-verification-over-mocks、ui-purpose-first
-- **`config.yaml` schema 扩展**：新增 6 个可选字段 `trigger_phrases` / `hard_stop` / `composition` / `decision_tree` / `consumers` / `meta_rules_must_check`
-- **session-start 仪式** 从 5 动作扩到 9 动作（仍 ≤ 300 行）：可选多语言分层、每步必须给 verify、简洁性+手术刀自检、配置驱动诊断、不干扰用户进程
+- **[Legacy-allowlist 分阶段迁移模式](./template/.harness/rules/example-legacy-allowlist-staged-migration.md)**——把一条新规则装进**已经违反 5 次以上**的代码库的纪律。三档策略（greenfield / 1–2 / 5+）+ pilot consumer 同 PR + 源文件中带过期日期的 marker + 强制 Migration path 章节
+- **配套 check 脚本**：强制 `@<rule-id>-legacy until=YYYY-MM-DD` marker 唯一性 + 过期检查（缺失 / 重复 / 过期都 FAIL）。附带 bash 3.x 可移植 `strip_comments` awk 帮助器
+- **[`docs/evolution.md`](./docs/evolution.md)** 新增"Installing rules retroactively"——讲清"big-bang block"和"完全不立规"为什么都失败，分阶段如何避免 `--no-verify` 雪崩
+- **[`docs/writing-checks.md`](./docs/writing-checks.md)** 新增两节：「带日期 marker 的 legacy allowlist」+「pattern 匹配前先剥注释」
+
+这些是把一个真实成熟 harness 部署的 PR 周期沉淀下来——已经过 3 轮硬化，你直接拿到终态。
+
+上一版：[v0.3.0 changelog](./CHANGELOG.md#030--2026-04-21)（元规则族 / hooks / external review）
 
 完整日志：[`CHANGELOG.md`](./CHANGELOG.md)
 
@@ -42,6 +44,7 @@
 │   ├── example-no-parallel-source-of-truth.md    ← 架构规则（R-*）
 │   ├── example-read-vendor-source-before-patching.md
 │   ├── example-three-strikes-same-file.md
+│   ├── example-legacy-allowlist-staged-migration.md  ← 落地规则（R-*）· v0.4.0
 │   ├── example-schema-before-ui-patch.md         ← 元规则（MR-*）
 │   ├── example-real-verification-over-mocks.md   ← 元规则（MR-*）
 │   └── example-ui-purpose-first.md               ← 元规则（MR-*）
@@ -125,6 +128,7 @@ Harness 和具体 AI 工具无关，配合场景：
 - **[Commit 规范](./docs/commit-convention.md)**——`<type>(<scope>): <subject>`，和 harness 的每项目 CHANGELOG 完美配合
 - **[改第三方组件 bug 前必读 vendor 源码](./template/.harness/rules/example-read-vendor-source-before-patching.md)**——种子规则，专治"符合直觉但治标不治本"的 setTimeout 类修复
 - **[同文件三振出局](./template/.harness/rules/example-three-strikes-same-file.md)**——同文件连续 3 轮不同诊断的 bugfix → 停手，做根因重分析，不再打补丁
+- **[Legacy-allowlist 分阶段迁移](./template/.harness/rules/example-legacy-allowlist-staged-migration.md)**——把规则装进已经有 5+ 处违反的代码库而不引发 `--no-verify` 雪崩：pilot consumer + LEGACY_ALLOWLIST + 源文件 `@<rule-id>-legacy until=YYYY-MM-DD` 过期 marker + Migration path 命名收尾 PR
 - **[改模型 · 不要糊 UI](./template/.harness/rules/example-schema-before-ui-patch.md)**——元规则种子：数据模型缺字段时，去改模型而不是在 UI 里 `?? defaultValue`
 - **[mock 测试过了 ≠ 真跑通](./template/.harness/rules/example-real-verification-over-mocks.md)**——元规则种子：DB / resolver / migration 类修复，"tests pass" 不构成完成证据
 - **[展示字段前先问 3 问](./template/.harness/rules/example-ui-purpose-first.md)**——元规则种子：用户在这界面做什么？这字段提供什么？没它会怎样？答不出就别展示

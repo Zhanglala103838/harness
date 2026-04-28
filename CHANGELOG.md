@@ -5,6 +5,32 @@ All notable changes to the Harness kit itself (not your per-project `.harness/CH
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] — 2026-04-28
+
+### Added
+
+- **New seeded rule: `example-legacy-allowlist-staged-migration.md`** — installing a rule against a codebase that already violates it 5+ times. Three-tier strategy (greenfield / 1–2 / 5+ legacy), pilot consumer requirement, dated source-marker enforcement, mandatory migration-path section.
+- **New seeded check: `check-legacy-allowlist-staged-migration.sh`** — bash 3.x portable, enforces `@<rule-id>-legacy until=YYYY-MM-DD` marker uniqueness (must be exactly one per allowlisted file), expiry, and presence. Ships with reusable `strip_comments` awk helper for forbidden-pattern grep.
+- **`docs/evolution.md`** gained "Installing rules retroactively (3-tier staged enforcement)" — the discipline for landing a rule against legacy code without triggering a `--no-verify` cascade.
+- **`docs/writing-checks.md`** gained two sections:
+  - "Legacy allowlist with dated marker" — why the marker lives in source, not in YAML.
+  - "Stripping comments before pattern matching" — the bash 3.x portable awk helper, with a note on when not to strip (markers themselves live in comments).
+
+### Changed
+
+- README bonus-patterns list expanded with the legacy-allowlist staged-migration pattern.
+- `template/.harness/config.yaml` bumped to `harness_version: 0.4.0`.
+
+### Field-tested
+
+This release distills lessons from a real PR cycle on a mature harness deployment where the same staged-enforcement rule was added, then hardened twice in follow-up PRs:
+
+- v1 — basic LEGACY_ALLOWLIST + grep-presence check for a marker (`head -1` extracted the date).
+- v1.1 — `head -1` masked accidental duplicate markers; tightened to require exactly one marker.
+- v1.2 — added migration-path mandatory section in rule doc + counter-example callout (don't use this pattern for security invariants).
+
+The seeded files in this release ship at the v1.2 shape — you skip the two follow-up hardening passes.
+
 ## [0.3.0] — 2026-04-21
 
 ### Added

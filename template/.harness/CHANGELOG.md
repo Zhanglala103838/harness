@@ -4,6 +4,13 @@
 
 The format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.4.0] — <YYYY-MM-DD>
+
+### Added
+
+- Seeded `rules/example-legacy-allowlist-staged-migration.md` + `checks/check-legacy-allowlist-staged-migration.sh` — install a rule against 5+ existing violations via pilot consumer + LEGACY_ALLOWLIST + dated `@<rule-id>-legacy until=YYYY-MM-DD` source markers.
+- `aggregate.all_checks` now includes the staged-migration check (SKIPs cleanly until you fill SCOPE_DIRS).
+
 ## [0.3.0] — <YYYY-MM-DD>
 
 ### Added

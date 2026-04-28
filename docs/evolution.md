@@ -39,6 +39,34 @@ What does NOT justify growth:
 - "We'll need this eventually."
 - "The framework docs recommend…"
 
+## Installing rules retroactively (3-tier staged enforcement)
+
+Most rules are written against future code. Sometimes you need to install a rule against a codebase that **already** violates it many times — typically when extracting a contract (a single resolver / formatter / scope helper) that displaces 5+ hand-rolled copies.
+
+Three paths, depending on how many existing violations you have:
+
+| Existing violations | Strategy | Rollout |
+|---|---|---|
+| 0 (greenfield) | Land contract + rule blocking | Same PR |
+| 1–2 (small) | Land contract + migrate every consumer + rule blocking | Same PR |
+| **5+ (legacy)** | **Land contract + 1 pilot consumer + rule + LEGACY_ALLOWLIST + dated markers** | **Staged across 2–3 PRs** |
+
+The 5+ row is where it gets interesting. Two failure modes lurk:
+
+1. **Block-everything trap** — land the rule blocking on every existing violation. Pre-commit fails on every PR touching unrelated files. The team learns `--no-verify`. The rule becomes decorative.
+2. **No-rule trap** — skip the rule until "all consumers are migrated." Migration never happens. New consumers appear. Contract is silently broken.
+
+The disciplined middle path is **staged enforcement with a dated source-marker**:
+
+1. **Pilot consumer in the same PR.** One smallest-diff consumer migrates to the contract. This proves the contract works in production-equivalent code path before you commit to migrating 4–10 more consumers.
+2. **`LEGACY_ALLOWLIST` of paths still using the hand-rolled pattern.** New files outside the allowlist must comply immediately.
+3. **Each allowlisted file carries exactly one `@<rule-id>-legacy until=YYYY-MM-DD` marker in its source.** The check counts markers and fails on missing / duplicate / expired. Removing or extending the marker is a code commit visible in `git log` — no silent renewals.
+4. **Rule doc has a Migration path section naming the closing PR.** "Temporary" without a closing PR named is forever.
+
+The reference rule + check ship as seeded examples: `template/.harness/rules/example-legacy-allowlist-staged-migration.md` and `template/.harness/checks/check-legacy-allowlist-staged-migration.sh`. Copy + edit for your contract.
+
+When this pattern is **wrong**: security invariants (auth checks, secret scrubbing, token redaction). Allowing legacy files to skip is unsafe. In that case, fix everything in one PR even if blast radius is high. Staged enforcement is for architectural discipline, not for security boundaries.
+
 ## What makes harness shrink
 
 - **Zero hits for 12 weeks** — candidate for retirement.
